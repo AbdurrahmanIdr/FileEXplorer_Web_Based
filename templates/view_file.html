@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>File Metadata</title>
+</head>
+<body>
+<div class="container">
+    <h1>File Metadata</h1>
+    <p>File Path: {{ file_path }}</p>
+    <p>File Size: {{ file_info['File Size'] }}</p>
+    <p>Last Modified: {{ file_info['Last Modified'] }}</p>
+    <p>Is Directory: {{ file_info['Is Directory'] }}</p>
+    <p>Is File: {{ file_info['Is File'] }}</p>
+    <p>File Extension: {{ file_info['File Extension'] }}</p>
+    <p>File Permissions: {{ file_info['File Permissions'] }}</p>
+    <hr>
+    <h2>Path Components:</h2>
+    <ul>
+        {% for component in file_info['Path Components'] %}
+        <li>{{ component }}</li>
+        {% endfor %}
+    </ul>
+    <hr>
+    <h2>Additional Information:</h2>
+    <pre>
+            {% for key, value in file_info.items() %}
+                {% if key not in ['File Path', 'File Size', 'Last Modified', 'Is Directory', 'Is File', 'File Permissions', 'Path Components'] %}
+                    {{ key }}: {{ value }}
+                {% endif %}
+            {% endfor %}
+        </pre>
+</div>
+</body>
+</html>

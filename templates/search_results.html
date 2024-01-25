@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>File Explorer</title>
+</head>
+<body>
+<div class="container">
+    <h1>File Explorer</h1>
+    <!-- Search Box -->
+    <form action="{{ url_for('search') }}" method="GET">
+        <label for="search">Search:</label>
+        <input type="text" id="search" name="query" placeholder="Enter file or folder name">
+        <button type="submit">Search</button>
+    </form>
+
+    <p>Current Folder:
+        {% for parent in current_directory.parents[::-1] %}
+        <a href="{{ url_for('index', rel_directory=parent) }}">
+            {{ parent.name }}
+        </a> /
+        {% endfor %}
+        {{ current_directory.name }}
+    </p>
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Size</th>
+            <th>Last Modified</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for file in files %}
+        <tr>
+            <td>
+                {% if current_directory.name == '' %}
+                <a href="{{ url_for('index', rel_directory=file) }}">{{ file }}</a>
+                {% else %}
+                {% if (current_directory / file).is_file() %}
+                <a href="{{ url_for('view_file', filepath=current_directory / file) }}">{{ file }}</a>
+                {% else %}
+                <a href="{{ url_for('index', rel_directory=current_directory / file) }}">{{ file }}</a>
+                {% endif %}
+                {% endif %}
+            </td>
+            <td>{% if (current_directory / file).is_file() %} File {% else %} Directory {% endif %}</td>
+            <td>{% if (current_directory / file).is_file() %} {{ (current_directory / file).stat().st_size | format_file_size }} {% endif
+                %}
+            </td>
+            <td>{% if (current_directory / file).is_file() %} {{ (current_directory / file).stat().st_mtime | datetimeformat('%Y-%m-%d %H:%M:%S') }} {% endif
+                %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
