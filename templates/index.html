@@ -12,11 +12,11 @@
         <h1>File Explorer</h1>
         <!-- Search Box -->
         <form action="{{ url_for('search') }}" method="GET" class="search-form">
-            <input type="text" id="search" name="query" placeholder="Enter file or folder name">
-            <input type="hidden" name="dir" value="{{ current_directory }}">
+    <input type="text" id="search" name="query" placeholder="Enter file or folder name">
+    <button type="submit">Search</button>
+    <input type="hidden" name="dir" value="{{ current_directory }}">
+</form>
 
-            <button type="submit">Search</button>
-        </form>
     </div>
     <p>Current Folder:
         {% for parent in current_directory.parents[::-1] %}
@@ -33,7 +33,7 @@
                 <th>Select</th>
                 <th>Name</th>
                 <th>Type</th>
-                <th>Size (bytes)</th>
+                <th>Size</th>
                 <th>Last Modified</th>
             </tr>
             </thead>
@@ -41,7 +41,8 @@
             {% for file in files %}
             <tr>
                 <td>
-                    <input type="checkbox" name="selected_files" value="{{ file }}">
+                    <input type="checkbox" name="selected_files" value="{{ (current_directory / file).resolve() }}">
+
                 </td>
                 <td>
                     {% if current_directory.name == '' %}

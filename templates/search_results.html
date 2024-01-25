@@ -27,37 +27,47 @@
         {% endfor %}
         {{ current_directory.name }}
     </p>
+    <form id="file-selection-form" action="{{ url_for('retrieve_selected_file_path') }}" method="post">
 
-    <table>
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Size (bytes)</th>
-            <th>Last Modified</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for file in files %}
-        <tr>
-            <td>
-                {% if current_directory.name == '' %}
-                <a href="{{ url_for('index', rel_directory=file['path']) }}">{{ file['name'] }}</a>
-                {% else %}
-                {% if file['is_file'] %}
-                <a href="{{ url_for('view_file', filepath=current_directory / file['path']) }}">{{ file['name'] }}</a>
-                {% else %}
-                <a href="{{ url_for('index', rel_directory=current_directory / file['path']) }}">{{ file['name'] }}</a>
-                {% endif %}
-                {% endif %}
-            </td>
-            <td>{% if file['is_file'] %} File {% else %} Directory {% endif %}</td>
-            <td>{% if file['is_file'] %} {{ file['size'] }} {% endif %}</td>
-            <td>{% if file['is_file'] %} {{ file['last_modified'] }} {% endif %}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+        <table>
+            <thead>
+            <tr>
+                <th>Select</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Size</th>
+                <th>Last Modified</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for file in files %}
+            <tr>
+                <td>
+                    <input type="checkbox" name="selected_files" value="{{ (current_directory / file['path']).resolve() }}">
+
+                </td>
+                <td>
+                    {% if current_directory.name == '' %}
+                    <a href="{{ url_for('index', rel_directory=file['path']) }}">{{ file['name'] }}</a>
+                    {% else %}
+                    {% if file['is_file'] %}
+                    <a href="{{ url_for('view_file', filepath=current_directory / file['path']) }}">{{ file['name']
+                        }}</a>
+                    {% else %}
+                    <a href="{{ url_for('index', rel_directory=current_directory / file['path']) }}">{{ file['name']
+                        }}</a>
+                    {% endif %}
+                    {% endif %}
+                </td>
+                <td>{% if file['is_file'] %} File {% else %} Directory {% endif %}</td>
+                <td>{% if file['is_file'] %} {{ file['size'] }} {% endif %}</td>
+                <td>{% if file['is_file'] %} {{ file['last_modified'] }} {% endif %}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit">Retrieve Selected File Path</button>
+    </form>
 </div>
 </body>
 </html>
