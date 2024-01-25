@@ -12,13 +12,11 @@ app = Flask(__name__)
 def get_user_folder_path():
     # Determine the user's file system based on the OS type
     if os.name == 'posix':  # Unix-based OS (Linux, macOS)
-        BASE_DIR = os.path.expanduser(f'~')
+        return os.path.expanduser(f'~')
     elif os.name == 'nt':  # Windows
-        BASE_DIR = os.path.join('C:\\', 'Users')
+        return os.path.join('C:\\', 'Users')
     else:
-        BASE_DIR = '/'  # Default to root for other OS types
-
-    return BASE_DIR
+        return '/'  # Default to root for other OS types
 
 
 BASE_DIR = get_user_folder_path()
@@ -29,7 +27,7 @@ def get_sorted_files(directory):
     parent = directory.parent
     try:
         items = list(directory.iterdir())
-    except PermissionError:
+    except (PermissionError, FileNotFoundError):
         app.logger.warning(f"PermissionError: Access is denied for '{directory}'")
         items = list(directory.parent.iterdir())
 
@@ -45,6 +43,8 @@ def get_sorted_files(directory):
                     dirs.append(real_path.name)
                 elif real_path.is_file():
                     files.append(real_path.name)
+
+    directory = directory.parent
 
     return sorted(dirs) + sorted(files)
 
