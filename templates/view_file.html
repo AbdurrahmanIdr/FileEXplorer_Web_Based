@@ -24,14 +24,21 @@
         {% endfor %}
     </ul>
     <hr>
-    <h2>Additional Information:</h2>
-    <pre>
-            {% for key, value in file_info.items() %}
-                {% if key not in ['File Path', 'File Size', 'Last Modified', 'Is Directory', 'Is File', 'File Permissions', 'Path Components'] %}
-                    {{ key }}: {{ value }}
-                {% endif %}
-            {% endfor %}
-        </pre>
+
+    <div style="text-align: center;">
+        <!-- Form to submit and retrieve the file path -->
+        <form action="{{ url_for('view_file', filepath=file_path) }}" method="post">
+            <button id="file-path-btn" type="submit">Retrieve File Path</button>
+        </form>
+
+
+        <!-- Display the file path -->
+        {% block file_path_display %}
+        {% if file_path_to_display %}
+        <p id="file-path-display">Retrieved File Path: {{ file_path_to_display }}</p>
+        {% endif %}
+        {% endblock %}
+    </div>
 </div>
 </body>
 </html>
