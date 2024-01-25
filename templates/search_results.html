@@ -43,7 +43,8 @@
             {% for file in files %}
             <tr>
                 <td>
-                    <input type="checkbox" name="selected_files" value="{{ (current_directory / file['path']).resolve() }}">
+                    <input type="checkbox" name="selected_files"
+                           value="{{ (current_directory / file['path']).resolve() }}">
 
                 </td>
                 <td>
@@ -66,7 +67,10 @@
             {% endfor %}
             </tbody>
         </table>
-        <button type="submit">Retrieve Selected File Path</button>
+        <div class="fixed-button">
+            <button type="submit">Send Path</button>
+        </div>
+
     </form>
 </div>
 </body>
