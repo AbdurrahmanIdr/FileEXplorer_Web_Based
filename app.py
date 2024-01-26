@@ -1,3 +1,10 @@
+"""
+File Explorer Web Application
+
+This Flask application serves as a simple file explorer allowing users to navigate through directories,
+view file metadata, search for files, and retrieve selected file paths.
+
+"""
 import datetime
 
 from flask import Flask, render_template, abort, request, redirect
@@ -10,7 +17,12 @@ app = Flask(__name__)
 
 
 def get_user_folder_path():
-    # Determine the user's file system based on the OS type
+    """
+        Determine the user's home directory based on the operating system.
+
+        Returns:
+            str: User's home directory path.
+        """
     if os.name == 'posix':  # Unix-based OS (Linux, macOS)
         return os.path.expanduser(f'~')
     elif os.name == 'nt':  # Windows
@@ -23,6 +35,15 @@ BASE_DIR = get_user_folder_path()
 
 
 def get_sorted_files(directory):
+    """
+       Get a sorted list of directories and files in the given directory.
+
+       Args:
+           directory (Path): The directory path.
+
+       Returns:
+           list: Sorted list of directories and files.
+       """
     items = []
     parent = directory.parent
     try:
@@ -44,12 +65,19 @@ def get_sorted_files(directory):
                 elif real_path.is_file():
                     files.append(real_path.name)
 
-    directory = directory.parent
-
     return sorted(dirs) + sorted(files)
 
 
 def format_file_size(size_in_bytes):
+    """
+       Format the file size in bytes to a human-readable string.
+
+       Args:
+           size_in_bytes (float): File size in bytes.
+
+       Returns:
+           str: Formatted file size with units.
+       """
     for unit in ['B', 'KB', 'MB', 'GB']:
         if size_in_bytes < 1024.0:
             break
@@ -58,10 +86,29 @@ def format_file_size(size_in_bytes):
 
 
 def datetimeformat(value, format='%Y-%m-%d %H:%M:%S'):
+    """
+       Format the given timestamp to a string using the specified format.
+
+       Args:
+           value (float): Timestamp.
+           format (str): Format string.
+
+       Returns:
+           str: Formatted datetime string.
+       """
     return datetime.datetime.fromtimestamp(value).strftime(format)
 
 
 def get_file_info(file_path):
+    """
+        Get information about a file.
+
+        Args:
+            file_path (Path): Path to the file.
+
+        Returns:
+            dict: File information dictionary.
+        """
     stat_info = os.stat(file_path)
 
     file_info = {
@@ -81,6 +128,15 @@ def get_file_info(file_path):
 @app.route('/')
 @app.route('/<path:rel_directory>')
 def index(rel_directory=BASE_DIR):
+    """
+       Render the home page or directory listing page.
+
+       Args:
+           rel_directory (str): Relative path of the directory.
+
+       Returns:
+           render_template: Rendered HTML template.
+       """
     abs_directory = rel_directory
     current_directory = Path(abs_directory)
     files = get_sorted_files(current_directory)
@@ -90,6 +146,15 @@ def index(rel_directory=BASE_DIR):
 
 @app.route('/view_file/<path:filepath>', methods=['GET', 'POST'])
 def view_file(filepath):
+    """
+        Render the page for viewing file metadata.
+
+        Args:
+            filepath (str): Path to the file.
+
+        Returns:
+            render_template: Rendered HTML template.
+        """
     file_path = Path(filepath)
 
     if not file_path.exists():
@@ -114,6 +179,17 @@ def view_file(filepath):
 
 
 def search_files(directory, query, depth=3):
+    """
+        Search for files in the specified directory matching the given query.
+
+        Args:
+            directory (Path): Directory to search.
+            query (str): Search query.
+            depth (int): Depth of recursive search.
+
+        Returns:
+            list: List of search results.
+        """
     results = []
 
     def recursive_search(path, current_depth):
@@ -142,6 +218,12 @@ def search_files(directory, query, depth=3):
 
 @app.route('/search')
 def search():
+    """
+       Render the page with search results.
+
+       Returns:
+           render_template: Rendered HTML template.
+       """
     query = request.args.get('query', '')
     abs_directory = request.args.get('dir', BASE_DIR)
     current_directory = Path(abs_directory)
@@ -152,6 +234,12 @@ def search():
 
 @app.route('/retrieve_selected_file_path', methods=['POST'])
 def retrieve_selected_file_path():
+    """
+        Render the page with retrieved selected file paths.
+
+        Returns:
+            render_template: Rendered HTML template.
+        """
     selected_files = request.form.getlist('selected_files')
     return render_template('selected_file_paths.html', selected_files=selected_files)
 
