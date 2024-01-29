@@ -26,7 +26,7 @@ def get_user_folder_path():
     if os.name == 'posix':  # Unix-based OS (Linux, macOS)
         return os.path.expanduser(f'~')
     elif os.name == 'nt':  # Windows
-        return os.path.join('C:\\', 'Users')
+        return Path('C:\\Users')
     else:
         return '/'  # Default to root for other OS types
 
