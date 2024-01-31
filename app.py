@@ -10,10 +10,28 @@ import datetime
 from flask import Flask, render_template, abort, request, redirect
 import os
 from pathlib import Path
-
-from passlib import pwd
+import platform
+import subprocess
 
 app = Flask(__name__)
+
+
+# Function to get connected devices
+def get_connected_devices():
+    devices = []
+    if platform.system() == 'Windows':
+        # Get connected drives in Windows
+        drives = subprocess.run(['wmic', 'logicaldisk', 'get', 'caption'], capture_output=True, text=True)
+        drive_list = drives.stdout.split('\n')[1:-1]
+        for drive in drive_list:
+            devices.append(drive.strip())
+    elif platform.system() == 'Linux':
+        # Get mounted devices in Linux
+        mounts = subprocess.run(['lsblk', '-o', 'NAME', '-n', '-l'], capture_output=True, text=True)
+        mount_list = mounts.stdout.split('\n')[:-1]
+        for mount in mount_list:
+            devices.append(mount.strip())
+    return devices
 
 
 def get_user_folder_path():
@@ -45,7 +63,6 @@ def get_sorted_files(directory):
            list: Sorted list of directories and files.
        """
     items = []
-    parent = directory.parent
     try:
         items = list(directory.iterdir())
     except (PermissionError, FileNotFoundError):
@@ -127,7 +144,7 @@ def get_file_info(file_path):
 
 @app.route('/')
 @app.route('/<path:rel_directory>')
-def index(rel_directory=BASE_DIR):
+def index(rel_directory='//'):
     """
        Render the home page or directory listing page.
 
@@ -137,9 +154,12 @@ def index(rel_directory=BASE_DIR):
        Returns:
            render_template: Rendered HTML template.
        """
-    abs_directory = rel_directory
-    current_directory = Path(abs_directory)
-    files = get_sorted_files(current_directory)
+    current_directory = Path(rel_directory)
+    if rel_directory == '//':
+        files = [x for x in get_connected_devices() if len(x) > 0]
+        print(files)
+    else:
+        files = get_sorted_files(current_directory)
 
     return render_template('index.html', files=files, current_directory=current_directory.resolve())
 

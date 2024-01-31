@@ -45,7 +45,7 @@
 
                 </td>
                 <td>
-                    {% if current_directory.name == '' %}
+                    {% if current_directory.name == '//' %}
                     <a href="{{ url_for('index', rel_directory=file) }}">{{ file }}</a>
                     {% else %}
                     {% if (current_directory / file).is_file() %}
