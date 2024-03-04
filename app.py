@@ -6,13 +6,12 @@ view file metadata, search for files, and retrieve selected file paths.
 
 """
 import datetime
-import functools
-
-from flask import Flask, render_template, abort, request, redirect, session, url_for
 import os
-from pathlib import Path
 import platform
 import subprocess
+from pathlib import Path
+
+from flask import Flask, render_template, abort, request
 
 app = Flask(__name__)
 
