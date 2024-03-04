@@ -15,18 +15,19 @@ from flask import Flask, render_template, abort, request
 
 app = Flask(__name__)
 
-#users = {'admin': 12345}
+
+# users = {'admin': 12345}
 
 
-#def login_required(route):
-  #  @functools.wraps(route)
-   # def route_wrapper(*args, **kwargs):
-      #  email = session['email']
-     #   if email or email not in users:
-       #     return redirect(url_for("login"))
-     #   return route(*args, **kwargs)
+# def login_required(route):
+#  @functools.wraps(route)
+# def route_wrapper(*args, **kwargs):
+#  email = session['email']
+#   if email or email not in users:
+#     return redirect(url_for("login"))
+#   return route(*args, **kwargs)
 
-   # return route_wrapper
+# return route_wrapper
 
 
 # Function to get connected devices
