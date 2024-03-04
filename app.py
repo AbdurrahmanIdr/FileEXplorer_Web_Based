@@ -15,7 +15,7 @@ from flask import Flask, render_template, abort, request
 
 app = Flask(__name__)
 
-users = {'admin': 12345}
+#users = {'admin': 12345}
 
 
 #def login_required(route):
