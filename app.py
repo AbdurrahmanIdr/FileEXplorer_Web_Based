@@ -6,14 +6,28 @@ view file metadata, search for files, and retrieve selected file paths.
 
 """
 import datetime
+import functools
 
-from flask import Flask, render_template, abort, request, redirect
+from flask import Flask, render_template, abort, request, redirect, session, url_for
 import os
 from pathlib import Path
 import platform
 import subprocess
 
 app = Flask(__name__)
+
+users = {'admin': 12345}
+
+
+#def login_required(route):
+  #  @functools.wraps(route)
+   # def route_wrapper(*args, **kwargs):
+      #  email = session['email']
+     #   if email or email not in users:
+       #     return redirect(url_for("login"))
+     #   return route(*args, **kwargs)
+
+   # return route_wrapper
 
 
 # Function to get connected devices
