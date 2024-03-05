@@ -6,31 +6,22 @@ view file metadata, search for files, and retrieve selected file paths.
 
 """
 import datetime
+import functools
 import os
 import platform
 import subprocess
 from pathlib import Path
 
-from flask import Flask, render_template, abort, request
+from flask import Flask, render_template, abort, request, url_for, redirect, session, flash
 
 app = Flask(__name__)
+#app.secret_key = 'your_secret_key'
 
-
-# users = {'admin': 12345}
-
-
-# def login_required(route):
-#  @functools.wraps(route)
-# def route_wrapper(*args, **kwargs):
-#  email = session['email']
-#   if email or email not in users:
-#     return redirect(url_for("login"))
-#   return route(*args, **kwargs)
-
-# return route_wrapper
+users = {'admin': 12345}
 
 
 # Function to get connected devices
+'''
 def get_connected_devices():
     devices = []
     if platform.system() == 'Windows':
@@ -41,11 +32,12 @@ def get_connected_devices():
             devices.append(drive.strip())
     elif platform.system() == 'Linux':
         # Get mounted devices in Linux
-        mounts = subprocess.run(['lsblk', '-o', 'NAME', '-n', '-l'], capture_output=True, text=True)
+        mounts = subprocess.run(['/bin', '/lsblk', '-o', 'NAME', '-n', '-l'], capture_output=True, text=True)
         mount_list = mounts.stdout.split('\n')[:-1]
         for mount in mount_list:
             devices.append(mount.strip())
-    return devices
+   return devices
+   '''
 
 
 def get_user_folder_path():
@@ -56,7 +48,7 @@ def get_user_folder_path():
             str: User's home directory path.
         """
     if os.name == 'posix':  # Unix-based OS (Linux, macOS)
-        return os.path.expanduser(f'~')
+        return Path(f'/home/')
     elif os.name == 'nt':  # Windows
         return Path('C:\\Users')
     else:
@@ -156,9 +148,26 @@ def get_file_info(file_path):
     return file_info
 
 
+def dir_files(directory):
+    current_directory = Path(directory)
+    files = get_sorted_files(current_directory)
+    return files, current_directory
+
+
+'''def login_required(route):
+    @functools.wraps(route)
+    def route_wrapper(*args, **kwargs):
+        if 'user' not in session or session['user'] not in users:
+            return redirect(url_for("login"))
+        return route(*args, **kwargs)
+
+    return route_wrapper
+    '''
+
+
 @app.route('/')
 @app.route('/<path:rel_directory>')
-def index(rel_directory='//'):
+def index(rel_directory=BASE_DIR):
     """
        Render the home page or directory listing page.
 
@@ -168,14 +177,23 @@ def index(rel_directory='//'):
        Returns:
            render_template: Rendered HTML template.
        """
-    current_directory = Path(rel_directory)
-    if rel_directory == '//':
-        files = [x for x in get_connected_devices() if len(x) > 0]
-        print(files)
-    else:
-        files = get_sorted_files(current_directory)
+    files, current_directory = dir_files(rel_directory)
 
     return render_template('index.html', files=files, current_directory=current_directory.resolve())
+
+
+'''
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        user = request.form['user']
+        pswd = request.form['pswd']
+
+        if user in users and users[user] == pswd:
+            session['user'] = user
+            return redirect(url_for('index'))
+    return render_template('login.html')
+    '''
 
 
 @app.route('/view_file/<path:filepath>', methods=['GET', 'POST'])
