@@ -21,7 +21,7 @@ li {
     max-width: 70%;
     margin: 0 auto;
     background-color: #fff;
-    padding: 20px;
+    padding: 30px 20px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
@@ -35,6 +35,8 @@ li {
     padding: 10px;
     text-align: center;
 }
+
+
 
 table {
     width: 100%;
@@ -84,6 +86,13 @@ form {
 .header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+}
+
+.header-div {
+    display: inherit;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
 }
 

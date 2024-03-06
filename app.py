@@ -8,19 +8,34 @@ view file metadata, search for files, and retrieve selected file paths.
 import datetime
 import functools
 import os
-import platform
-import subprocess
+import secrets
+import shutil
 from pathlib import Path
-
-from flask import Flask, render_template, abort, request, url_for, redirect, session, flash, get_flashed_messages
 from secrets import compare_digest
 
-from werkzeug.utils import secure_filename
+from flask import Flask, render_template, abort, request, url_for, redirect, session, flash
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+csrf = CSRFProtect(app)
+app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
+app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # CSRF token expires after 1 hour
+app.config['WTF_CSRF_SSL_STRICT'] = True  # Strict SSL check for CSRF tokens
 
 users_info = {'admin': 12345, 'admin2': 123456, 'user1': 123456}
+
+
+# CSRF protection for all forms
+class MyForm(FlaskForm):
+    pass
+
+
+# Before each request, set a new random secret key for the session
+@app.before_request
+def set_session_secret_key():
+    if 'secret_key' not in session:
+        session['secret_key'] = secrets.token_urlsafe(32)
 
 
 def get_user_folder_path():
@@ -170,21 +185,23 @@ def index(rel_directory=BASE_DIR):
 # Login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['user']
-        password = request.form['pswd']
+    form = MyForm()
+    if form.validate_on_submit():
+        if request.method == 'POST':
+            username = request.form['user']
+            password = request.form['pswd']
 
-        print(username, password)
+            print(username, password)
 
-        # Check if username and password match
-        if username in users_info and compare_digest(str(users_info[username]), password):
-            session['username'] = username  # Store username in session
-            flash('Logged in successfully!', 'success')
-            return redirect(url_for('index'))
-        else:
-            print('Invalid username or password.')
-            flash('Invalid username or password', 'error')
-            return redirect(url_for('login'))
+            # Check if username and password match
+            if username in users_info and compare_digest(str(users_info[username]), password):
+                session['username'] = username  # Store username in session
+                flash('Logged in successfully!', 'success')
+                return redirect(url_for('index'))
+            else:
+                print('Invalid username or password.')
+                flash('Invalid username or password', 'error')
+                return redirect(url_for('login'))
 
     return render_template('login.html')
 
@@ -322,6 +339,28 @@ def upload(current_directory):
     else:
         flash('Error uploading file', 'error')
         return redirect(request.url)
+
+
+@app.route('/delete_file_or_directory', methods=['POST'])
+@login_required
+def delete_file_or_directory():
+    if request.method == 'POST':
+        path = request.form.get('path')
+        try:
+            if os.path.exists(path):
+                if os.path.isfile(path):
+                    os.remove(path)
+                    flash('File deleted successfully!', 'success')
+                elif os.path.isdir(path):
+                    shutil.rmtree(path)
+                    flash('Directory deleted successfully!', 'success')
+            else:
+                flash('File or directory does not exist.', 'error')
+        except Exception as e:
+            app.logger.error(f"Error deleting file/directory: {e}")
+            flash('An error occurred while deleting the file/directory.', 'error')
+
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
