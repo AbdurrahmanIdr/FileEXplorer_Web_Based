@@ -12,32 +12,15 @@ import platform
 import subprocess
 from pathlib import Path
 
-from flask import Flask, render_template, abort, request, url_for, redirect, session, flash
+from flask import Flask, render_template, abort, request, url_for, redirect, session, flash, get_flashed_messages
+from secrets import compare_digest
+
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-#app.secret_key = 'your_secret_key'
+app.secret_key = 'your_secret_key'
 
-users = {'admin': 12345}
-
-
-# Function to get connected devices
-'''
-def get_connected_devices():
-    devices = []
-    if platform.system() == 'Windows':
-        # Get connected drives in Windows
-        drives = subprocess.run(['wmic', 'logicaldisk', 'get', 'caption'], capture_output=True, text=True)
-        drive_list = drives.stdout.split('\n')[1:-1]
-        for drive in drive_list:
-            devices.append(drive.strip())
-    elif platform.system() == 'Linux':
-        # Get mounted devices in Linux
-        mounts = subprocess.run(['/bin', '/lsblk', '-o', 'NAME', '-n', '-l'], capture_output=True, text=True)
-        mount_list = mounts.stdout.split('\n')[:-1]
-        for mount in mount_list:
-            devices.append(mount.strip())
-   return devices
-   '''
+users_info = {'admin': 12345, 'admin2': 123456, 'user1': 123456}
 
 
 def get_user_folder_path():
@@ -154,19 +137,21 @@ def dir_files(directory):
     return files, current_directory
 
 
-'''def login_required(route):
+def login_required(route):
     @functools.wraps(route)
     def route_wrapper(*args, **kwargs):
-        if 'user' not in session or session['user'] not in users:
-            return redirect(url_for("login"))
+        if 'username' not in session or session['username'] not in users_info:
+            print('Please log in to access this page.', 'error')
+            flash('Please log in to access this page.', 'error')
+            return redirect(url_for('login'))
         return route(*args, **kwargs)
 
     return route_wrapper
-    '''
 
 
 @app.route('/')
 @app.route('/<path:rel_directory>')
+@login_required
 def index(rel_directory=BASE_DIR):
     """
        Render the home page or directory listing page.
@@ -182,21 +167,38 @@ def index(rel_directory=BASE_DIR):
     return render_template('index.html', files=files, current_directory=current_directory.resolve())
 
 
-'''
+# Login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = request.form['user']
-        pswd = request.form['pswd']
+        username = request.form['user']
+        password = request.form['pswd']
 
-        if user in users and users[user] == pswd:
-            session['user'] = user
+        print(username, password)
+
+        # Check if username and password match
+        if username in users_info and compare_digest(str(users_info[username]), password):
+            session['username'] = username  # Store username in session
+            flash('Logged in successfully!', 'success')
             return redirect(url_for('index'))
+        else:
+            print('Invalid username or password.')
+            flash('Invalid username or password', 'error')
+            return redirect(url_for('login'))
+
     return render_template('login.html')
-    '''
+
+
+# Logout route
+@app.route('/logout')
+def logout():
+    session.pop('username', None)  # Remove username from session
+    flash('Logged out successfully!', 'success')
+    return redirect(url_for('login'))
 
 
 @app.route('/view_file/<path:filepath>', methods=['GET', 'POST'])
+@login_required
 def view_file(filepath):
     """
         Render the page for viewing file metadata.
@@ -269,6 +271,7 @@ def search_files(directory, query, depth=3):
 
 
 @app.route('/search')
+@login_required
 def search():
     """
        Render the page with search results.
@@ -285,6 +288,7 @@ def search():
 
 
 @app.route('/retrieve_selected_file_path', methods=['POST'])
+@login_required
 def retrieve_selected_file_path():
     """
         Render the page with retrieved selected file paths.
@@ -294,6 +298,30 @@ def retrieve_selected_file_path():
         """
     selected_files = request.form.getlist('selected_files')
     return render_template('selected_file_paths.html', selected_files=selected_files)
+
+
+# Upload route
+@app.route('/upload/<path:current_directory>', methods=['POST'])
+@login_required
+def upload(current_directory):
+    if 'file' not in request.files:
+        flash('No file part', 'error')
+        return redirect(request.url)
+
+    file = request.files['file']
+
+    if file.filename == '':
+        flash('No selected file', 'error')
+        return redirect(request.url)
+
+    if file:
+        # Save the uploaded file to the current directory
+        file.save(os.path.join(current_directory, file.filename))
+        flash('File uploaded successfully!', 'success')
+        return redirect(url_for('index', rel_directory=current_directory))
+    else:
+        flash('Error uploading file', 'error')
+        return redirect(request.url)
 
 
 if __name__ == '__main__':
