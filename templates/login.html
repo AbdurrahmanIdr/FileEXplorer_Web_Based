@@ -3,7 +3,7 @@
 {% block content %}
 
 <h2>Login</h2>
-<form method="POST">
+<form method="POST" action="{{ url_for('login') }}" class="login-form">
     <label for="user" >User:</label>
     <input type="text" name="user" id="user" required><br>
     <label for="pswd">Password:</label>
