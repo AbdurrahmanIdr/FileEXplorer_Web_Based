@@ -1,3 +1,2 @@
 Flask~=3.0.1
 gunicorn
-pam~=0.2.0
