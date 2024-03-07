@@ -10,25 +10,14 @@ import functools
 import os
 import secrets
 import shutil
+import subprocess
 from pathlib import Path
 from secrets import compare_digest
 
 from flask import Flask, render_template, abort, request, url_for, redirect, session, flash
-from flask_wtf import FlaskForm
-from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__)
-csrf = CSRFProtect(app)
 app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
-app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # CSRF token expires after 1 hour
-app.config['WTF_CSRF_SSL_STRICT'] = True  # Strict SSL check for CSRF tokens
-
-users_info = {'admin': 12345, 'admin2': 123456, 'user1': 123456}
-
-
-# CSRF protection for all forms
-class MyForm(FlaskForm):
-    pass
 
 
 # Before each request, set a new random secret key for the session
@@ -152,7 +141,30 @@ def dir_files(directory):
     return files, current_directory
 
 
+def get_linux_users():
+    """Get a list of Linux users."""
+    try:
+        # Run the 'getent passwd' command to get user information
+        result = subprocess.run(['getent', 'passwd'], capture_output=True, text=True, check=True)
+        users = result.stdout.strip().split('\n')
+        # Extract usernames from the output
+        user_list = [user.split(':')[0] for user in users]
+        return user_list
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e}")
+        return []
+
+
+def get_users():
+    if os.name == 'posix':  # Unix-based OS (Linux, macOS)
+        return get_linux_users()
+    else:  # os.name == 'nt':  # Windows
+        return os.listdir(BASE_DIR)
+
+
 def login_required(route):
+    users_info = get_users()
+
     @functools.wraps(route)
     def route_wrapper(*args, **kwargs):
         if 'username' not in session or session['username'] not in users_info:
@@ -167,7 +179,7 @@ def login_required(route):
 @app.route('/')
 @app.route('/<path:rel_directory>')
 @login_required
-def index(rel_directory=BASE_DIR):
+def index(rel_directory=''):
     """
        Render the home page or directory listing page.
 
@@ -177,6 +189,10 @@ def index(rel_directory=BASE_DIR):
        Returns:
            render_template: Rendered HTML template.
        """
+    if rel_directory == '':
+        username = session['username']
+        rel_directory = os.path.join(BASE_DIR, username)
+
     files, current_directory = dir_files(rel_directory)
 
     return render_template('index.html', files=files, current_directory=current_directory.resolve())
@@ -185,23 +201,27 @@ def index(rel_directory=BASE_DIR):
 # Login route
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = MyForm()
-    if form.validate_on_submit():
-        if request.method == 'POST':
-            username = request.form['user']
-            password = request.form['pswd']
+    if request.method == 'POST':
+        username = request.form['user']
+        password = request.form['pswd']
 
-            print(username, password)
+        print(username, password)
 
-            # Check if username and password match
-            if username in users_info and compare_digest(str(users_info[username]), password):
-                session['username'] = username  # Store username in session
-                flash('Logged in successfully!', 'success')
-                return redirect(url_for('index'))
-            else:
-                print('Invalid username or password.')
-                flash('Invalid username or password', 'error')
-                return redirect(url_for('login'))
+        if os.name == 'posix':
+            users_info = {user: 12345 for user in get_users()}
+
+        else:
+            users_info = {user: 12345 for user in get_users()}
+
+        # Check if username and password match
+        if username in users_info and compare_digest(str(users_info[username]), password):
+            session['username'] = username  # Store username in session
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('index'))
+        else:
+            print('Invalid username or password.')
+            flash('Invalid username or password', 'error')
+            return redirect(url_for('login'))
 
     return render_template('login.html')
 
@@ -341,26 +361,32 @@ def upload(current_directory):
         return redirect(request.url)
 
 
-@app.route('/delete_file_or_directory', methods=['POST'])
+@app.route('/delete_file_or_directory/', methods=['POST'])
 @login_required
 def delete_file_or_directory():
     if request.method == 'POST':
         path = request.form.get('path')
+        # current_directory = request.form.get('current_directory')  # Retrieve current directory from form data
+        current_directory = request.referrer
         try:
             if os.path.exists(path):
                 if os.path.isfile(path):
                     os.remove(path)
+                    print('File deleted successfully!', 'success')
                     flash('File deleted successfully!', 'success')
                 elif os.path.isdir(path):
                     shutil.rmtree(path)
+                    print('Directory deleted successfully!', 'success')
                     flash('Directory deleted successfully!', 'success')
             else:
+                print('File or directory does not exist.', 'error')
                 flash('File or directory does not exist.', 'error')
         except Exception as e:
             app.logger.error(f"Error deleting file/directory: {e}")
             flash('An error occurred while deleting the file/directory.', 'error')
+            print('An error occurred while deleting the file/directory.', 'error')
 
-    return redirect(url_for('index'))
+    return redirect(current_directory)
 
 
 if __name__ == '__main__':

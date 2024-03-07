@@ -7,9 +7,7 @@
     <title>File Explorer</title>
 </head>
 <body>
-
-{% block content %}
-<p>
+{% block flash %}
 {% with messages = get_flashed_messages() %}
 {% if messages %}
 <ul>
@@ -19,7 +17,10 @@
 </ul>
 {% endif %}
 {% endwith %}
-</p>
+
+{% endblock %}
+
+{% block content %}
 
 {% endblock %}
 </body>
