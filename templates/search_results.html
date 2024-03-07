@@ -14,7 +14,7 @@
 
 
     <p>Current Folder:
-        {% for parent in current_directory.parents[::-1] %}
+        {% for parent in current_directory.parents[::-2] %}
         <a href="{{ url_for('index', rel_directory=parent) }}">
             {{ parent.name }}
         </a> /

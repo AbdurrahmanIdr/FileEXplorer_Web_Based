@@ -10,7 +10,6 @@ import functools
 import os
 import secrets
 import shutil
-import subprocess
 from pathlib import Path
 from secrets import compare_digest
 
@@ -35,7 +34,7 @@ def get_user_folder_path():
             str: User's home directory path.
         """
     if os.name == 'posix':  # Unix-based OS (Linux, macOS)
-        return Path(f'/home/')
+        return Path(f'/home')
     elif os.name == 'nt':  # Windows
         return Path('C:\\Users')
     else:
@@ -141,25 +140,8 @@ def dir_files(directory):
     return files, current_directory
 
 
-def get_linux_users():
-    """Get a list of Linux users."""
-    try:
-        # Run the 'getent passwd' command to get user information
-        result = subprocess.run(['getent', 'passwd'], capture_output=True, text=True, check=True)
-        users = result.stdout.strip().split('\n')
-        # Extract usernames from the output
-        user_list = [user.split(':')[0] for user in users]
-        return user_list
-    except subprocess.CalledProcessError as e:
-        print(f"Error: {e}")
-        return []
-
-
 def get_users():
-    if os.name == 'posix':  # Unix-based OS (Linux, macOS)
-        return get_linux_users()
-    else:  # os.name == 'nt':  # Windows
-        return os.listdir(BASE_DIR)
+    return os.listdir(BASE_DIR)
 
 
 def login_required(route):
