@@ -34,14 +34,14 @@ def get_user_folder_path():
             str: User's home directory path.
         """
     if os.name == 'posix':  # Unix-based OS (Linux, macOS)
-        return Path(f'/home')
+        return os.path.join('/', 'home')
     elif os.name == 'nt':  # Windows
-        return Path('C:\\Users')
+        return os.path.join('C:','\\', 'Users')
     else:
         return '/'  # Default to root for other OS types
 
 
-BASE_DIR = get_user_folder_path()
+BASE_DIR = str(get_user_folder_path())
 
 
 def get_sorted_files(directory):
@@ -55,11 +55,13 @@ def get_sorted_files(directory):
            list: Sorted list of directories and files.
        """
     items = []
+    directory = Path(directory)
     try:
         items = list(directory.iterdir())
     except (PermissionError, FileNotFoundError):
         app.logger.warning(f"PermissionError: Access is denied for '{directory}'")
-        items = list(directory.parent.iterdir())
+        directory = directory.parent
+        items = list(directory.iterdir())
 
     dirs = []
     files = []
@@ -74,9 +76,10 @@ def get_sorted_files(directory):
                 elif real_path.is_file():
                     files.append(real_path.name)
 
-    return sorted(dirs) + sorted(files)
+    return sorted(dirs) + sorted(files), directory
 
 
+@app.template_filter('format_file_size')
 def format_file_size(size_in_bytes):
     """
        Format the file size in bytes to a human-readable string.
@@ -84,7 +87,7 @@ def format_file_size(size_in_bytes):
        Args:
            size_in_bytes (float): File size in bytes.
 
-       Returns:
+       Returnse
            str: Formatted file size with units.
        """
     for unit in ['B', 'KB', 'MB', 'GB']:
@@ -94,6 +97,7 @@ def format_file_size(size_in_bytes):
     return f"{size_in_bytes:.2f} {unit}"
 
 
+@app.template_filter('datetimeformat')
 def datetimeformat(value, format='%Y-%m-%d %H:%M:%S'):
     """
        Format the given timestamp to a string using the specified format.
@@ -134,12 +138,6 @@ def get_file_info(file_path):
     return file_info
 
 
-def dir_files(directory):
-    current_directory = Path(directory)
-    files = get_sorted_files(current_directory)
-    return files, current_directory
-
-
 def get_users():
     return os.listdir(BASE_DIR)
 
@@ -158,10 +156,17 @@ def login_required(route):
     return route_wrapper
 
 
+def get_unix_path(path_dir):
+    if os.name == 'posix' and str(path_dir)[0] != '/':
+        return '/' + path_dir
+
+    return path_dir
+
+
 @app.route('/')
-@app.route('/<path:rel_directory>')
+@app.route('/index/<path:rel_directory>/')
 @login_required
-def index(rel_directory=''):
+def index(rel_directory):
     """
        Render the home page or directory listing page.
 
@@ -171,23 +176,21 @@ def index(rel_directory=''):
        Returns:
            render_template: Rendered HTML template.
        """
-    if rel_directory == '':
-        username = session['username']
-        rel_directory = os.path.join(BASE_DIR, username)
 
-    files, current_directory = dir_files(rel_directory)
+    rel_directory = get_unix_path(rel_directory)
+
+    if os.path.isdir(rel_directory):
+        files, current_directory = get_sorted_files(rel_directory)
 
     return render_template('index.html', files=files, current_directory=current_directory.resolve())
 
 
 # Login route
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['user']
         password = request.form['pswd']
-
-        print(username, password)
 
         if os.name == 'posix':
             users_info = {user: 12345 for user in get_users()}
@@ -199,9 +202,9 @@ def login():
         if username in users_info and compare_digest(str(users_info[username]), password):
             session['username'] = username  # Store username in session
             flash('Logged in successfully!', 'success')
-            return redirect(url_for('index'))
+            rel_directory = str(os.path.join(BASE_DIR, username))
+            return redirect(url_for('index', rel_directory=rel_directory))
         else:
-            print('Invalid username or password.')
             flash('Invalid username or password', 'error')
             return redirect(url_for('login'))
 
@@ -216,7 +219,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/view_file/<path:filepath>', methods=['GET', 'POST'])
+@app.route('/view_file/<path:filepath>/', methods=['GET', 'POST'])
 @login_required
 def view_file(filepath):
     """
@@ -228,10 +231,11 @@ def view_file(filepath):
         Returns:
             render_template: Rendered HTML template.
         """
-    file_path = Path(filepath)
+    file_path = Path(get_unix_path(filepath))
 
     if not file_path.exists():
         app.logger.info(f"The file '{file_path}' does not exist.")
+        flash(f"The file '{file_path}' does not exist.")
         abort(404)
 
     app.logger.info(f"Viewing metadata for file: {file_path}")
@@ -335,6 +339,7 @@ def upload(current_directory):
 
     if file:
         # Save the uploaded file to the current directory
+        current_directory = get_unix_path(current_directory)
         file.save(os.path.join(current_directory, file.filename))
         flash('File uploaded successfully!', 'success')
         return redirect(url_for('index', rel_directory=current_directory))
@@ -354,19 +359,15 @@ def delete_file_or_directory():
             if os.path.exists(path):
                 if os.path.isfile(path):
                     os.remove(path)
-                    print('File deleted successfully!', 'success')
                     flash('File deleted successfully!', 'success')
                 elif os.path.isdir(path):
                     shutil.rmtree(path)
-                    print('Directory deleted successfully!', 'success')
                     flash('Directory deleted successfully!', 'success')
             else:
-                print('File or directory does not exist.', 'error')
                 flash('File or directory does not exist.', 'error')
         except Exception as e:
             app.logger.error(f"Error deleting file/directory: {e}")
             flash('An error occurred while deleting the file/directory.', 'error')
-            print('An error occurred while deleting the file/directory.', 'error')
 
     return redirect(current_directory)
 
