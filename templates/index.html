@@ -27,7 +27,7 @@
     </div>
 
     <p>Current Folder:
-        {% for parent in current_directory.parents[::-2] %}
+        {% for parent in current_directory.parents[-3::-1] %}
         <a href="{{ url_for('index', rel_directory=parent) }}">
             {{ parent.name }}
         </a> /
