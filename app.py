@@ -58,8 +58,12 @@ def get_sorted_files(directory):
     directory = Path(directory)
     try:
         items = list(directory.iterdir())
-    except (PermissionError, FileNotFoundError):
+    except PermissionError:
         app.logger.warning(f"PermissionError: Access is denied for '{directory}'")
+        directory = directory.parent
+        items = list(directory.iterdir())
+    except FileNotFoundError:
+        app.logger.warning(f"FileNotFoundError: Dir not found '{directory}'")
         directory = directory.parent
         items = list(directory.iterdir())
 
@@ -212,7 +216,7 @@ def login():
 
 
 # Logout route
-@app.route('/logout')
+@app.route('/logout/')
 def logout():
     session.pop('username', None)  # Remove username from session
     flash('Logged out successfully!', 'success')
@@ -293,7 +297,7 @@ def search_files(directory, query, depth=3):
     return results
 
 
-@app.route('/search')
+@app.route('/search/')
 @login_required
 def search():
     """
@@ -310,7 +314,7 @@ def search():
                            current_directory=current_directory.resolve(), query=query)
 
 
-@app.route('/retrieve_selected_file_path', methods=['POST'])
+@app.route('/retrieve_selected_file_path/', methods=['POST'])
 @login_required
 def retrieve_selected_file_path():
     """
@@ -324,7 +328,7 @@ def retrieve_selected_file_path():
 
 
 # Upload route
-@app.route('/upload/<path:current_directory>', methods=['POST'])
+@app.route('/upload/<path:current_directory>/', methods=['POST'])
 @login_required
 def upload(current_directory):
     if 'file' not in request.files:
@@ -353,8 +357,9 @@ def upload(current_directory):
 def delete_file_or_directory():
     if request.method == 'POST':
         path = request.form.get('path')
-        # current_directory = request.form.get('current_directory')  # Retrieve current directory from form data
-        current_directory = request.referrer
+        current_directory = request.form.get('current_directory')  # Retrieve current directory from form data
+        current_directory = get_unix_path(current_directory)
+        # current_directory = request.referrer
         try:
             if os.path.exists(path):
                 if os.path.isfile(path):
@@ -369,10 +374,8 @@ def delete_file_or_directory():
             app.logger.error(f"Error deleting file/directory: {e}")
             flash('An error occurred while deleting the file/directory.', 'error')
 
-    return redirect(current_directory)
+    return redirect(url_for('index', rel_directory=current_directory))
 
 
 if __name__ == '__main__':
-    app.jinja_env.filters['format_file_size'] = format_file_size
-    app.jinja_env.filters['datetimeformat'] = datetimeformat
-    app.run(debug=True)
+    app.run(debug=False)

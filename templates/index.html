@@ -3,9 +3,6 @@
 {% block content %}
 
 <div class="container">
-    {% block flash %}
-
-    {% endblock %}
     <div class="header">
         <h1>File Explorer</h1>
         <div class="header-div">
@@ -78,7 +75,7 @@
                     <form action="{{ url_for('delete_file_or_directory') }}"
                           method="post"
                           onsubmit="return confirm('Are you sure you want to delete this file/directory?');">
-                        <!-- <input type="hidden" name="current_directory" value="{{ current_directory }}"> -->
+                        <input type="hidden" name="current_directory" value="{{ current_directory }}">
                         <input type="hidden" name="path" value="{{ current_directory / file }}">
                         <button type="submit">Delete</button>
                     </form>
