@@ -20,10 +20,10 @@ app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
 
 
 # Before each request, set a new random secret key for the session
-# @app.before_request
-# def set_session_secret_key():
- #   if 'secret_key' not in session:
-   #     session['secret_key'] = secrets.token_urlsafe(32)
+@app.before_request
+def set_session_secret_key():
+    if 'secret_key' not in session:
+        session['secret_key'] = secrets.token_urlsafe(32)
 
 
 def get_user_folder_path():
@@ -175,7 +175,6 @@ def get_unix_path(path_dir):
     return path_dir
 
 
-@app.route('/')
 @app.route('/index/<path:rel_directory>/')
 @login_required
 def index(rel_directory):
@@ -198,6 +197,7 @@ def index(rel_directory):
 
 
 # Login route
+@app.route('/')
 @app.route('/login/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -386,4 +386,4 @@ def delete_file_or_directory():
 
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
