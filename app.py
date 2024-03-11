@@ -176,7 +176,7 @@ def get_unix_path(path_dir):
 
 
 @app.route('/index/<path:rel_directory>/')
-@login_required
+# @login_required
 def index(rel_directory):
     """
        Render the home page or directory listing page.
@@ -232,7 +232,7 @@ def logout():
 
 
 @app.route('/view_file/<path:filepath>/', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def view_file(filepath):
     """
         Render the page for viewing file metadata.
@@ -306,7 +306,7 @@ def search_files(directory, query, depth=3):
 
 
 @app.route('/search/')
-@login_required
+# @login_required
 def search():
     """
        Render the page with search results.
@@ -323,7 +323,7 @@ def search():
 
 
 @app.route('/retrieve_selected_file_path/', methods=['POST'])
-@login_required
+# @login_required
 def retrieve_selected_file_path():
     """
         Render the page with retrieved selected file paths.
@@ -337,7 +337,7 @@ def retrieve_selected_file_path():
 
 # Upload route
 @app.route('/upload/<path:current_directory>/', methods=['POST'])
-@login_required
+# @login_required
 def upload(current_directory):
     if 'file' not in request.files:
         flash('No file part', 'error')
@@ -361,7 +361,7 @@ def upload(current_directory):
 
 
 @app.route('/delete_file_or_directory/', methods=['POST'])
-@login_required
+# @login_required
 def delete_file_or_directory():
     if request.method == 'POST':
         path = request.form.get('path')
