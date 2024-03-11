@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<div class="container">
+<div>
+    {% block header %}
     <div class="header">
         <h1>Search Results for "{{ query }}"</h1>
         <!-- Search Box -->
@@ -21,6 +21,8 @@
         {% endfor %}
         {{ current_directory.name }}
     </p>
+    {% endblock %}
+    {% block content %}
     <form id="file-selection-form" action="{{ url_for('retrieve_selected_file_path') }}" method="post">
 
         <table>
@@ -77,6 +79,7 @@
         </div>
 
     </form>
+    {% endblock %}
 </div>
 
-{% endblock %}
+

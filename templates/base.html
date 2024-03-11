@@ -4,39 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='script1.js') }}"></script>
     <title>File Explorer</title>
-    <script>
-        // Fade out flash messages after 5 seconds
-        document.addEventListener('DOMContentLoaded', function () {
-            var flashes = document.querySelectorAll('.flash');
-            flashes.forEach(function (flash) {
-                setTimeout(function () {
-                    flash.style.opacity = '0';
-                    setTimeout(function () {
-                        flash.style.display = 'none';
-                    }, 1000);
-                }, 5000);
-            });
-        });
-    </script>
 
 </head>
 <body>
-{% block flash %}
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-<ul >
-    {% for message in messages %}
-    <li class="flash">{{ message }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
-{% endwith %}
 
-{% endblock %}
+<div class="container">
+    {% block header %}
 
-{% block content %}
+    {% endblock %}
+    {% block flash %}
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul>
+        {% for message in messages %}
+        <li class="flash">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
 
-{% endblock %}
+    {% endblock %}
+    {% block content %}
+
+    {% endblock %}
+</div>
+
 </body>
 </html>
