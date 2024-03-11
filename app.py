@@ -20,10 +20,10 @@ app.config['SECRET_KEY'] = secrets.token_urlsafe(32)
 
 
 # Before each request, set a new random secret key for the session
-@app.before_request
-def set_session_secret_key():
-    if 'secret_key' not in session:
-        session['secret_key'] = secrets.token_urlsafe(32)
+# @app.before_request
+# def set_session_secret_key():
+ #   if 'secret_key' not in session:
+   #     session['secret_key'] = secrets.token_urlsafe(32)
 
 
 def get_user_folder_path():
@@ -36,7 +36,7 @@ def get_user_folder_path():
     if os.name == 'posix':  # Unix-based OS (Linux, macOS)
         return os.path.join('/', 'home')
     elif os.name == 'nt':  # Windows
-        return os.path.join('C:','\\', 'Users')
+        return os.path.join('C:', '\\', 'Users')
     else:
         return '/'  # Default to root for other OS types
 
@@ -56,31 +56,39 @@ def get_sorted_files(directory):
        """
     items = []
     directory = Path(directory)
+
     try:
         items = list(directory.iterdir())
-    except PermissionError:
-        app.logger.warning(f"PermissionError: Access is denied for '{directory}'")
-        directory = directory.parent
-        items = list(directory.iterdir())
-    except FileNotFoundError:
-        app.logger.warning(f"FileNotFoundError: Dir not found '{directory}'")
+    except (PermissionError, FileNotFoundError) as e:
+        app.logger.warning(f"Error accessing directory: {e}")
         directory = directory.parent
         items = list(directory.iterdir())
 
-    dirs = []
-    files = []
+    dirs = []  # List to store unique directory names
+    files = []  # List to store file names
+
+    # Set to store directory names to avoid repetition
+    seen_dirs = set()
+    seen_files = set()
 
     for item in items:
-        if item.is_dir() or item.is_file():
-            # Resolve symbolic links to get the real path
-            real_path = item.resolve()
-            if real_path != directory:
-                if real_path.is_dir():
-                    dirs.append(real_path.name)
-                elif real_path.is_file():
-                    files.append(real_path.name)
+        if item.is_dir() or item.is_file():  # Check if the item is either a directory or a file
+            real_path = item.resolve()  # Resolve symbolic links to get the real path
+            name = real_path.name  # Get the name of the item
 
-    return sorted(dirs) + sorted(files), directory
+            # Exclude files and folders that start with a dot
+            if not name.startswith('.'):
+                if real_path != directory:  # Exclude the current directory from the list
+                    if real_path.is_dir():  # Check if the item is a directory
+                        if name not in seen_dirs:  # Check if the directory name is not repeated
+                            dirs.append(name)  # Append the directory name to the list of directories
+                            seen_dirs.add(name)  # Add the directory name to the set of seen directories
+                    elif real_path.is_file():  # Check if the item is a file
+                        if name not in seen_files:  # Check if the directory name is not repeated
+                            files.append(name)  # Append the file name to the list of files
+                            seen_files.add(name)  # Add the file name to the set of seen files
+
+    return sorted(list(seen_dirs)) + sorted(list(seen_files)), directory
 
 
 @app.template_filter('format_file_size')

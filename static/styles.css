@@ -66,16 +66,19 @@ p {
     margin-bottom: 10px;
 }
 
+/* Buttons */
 button {
-    background-color: #4CAF50;
+    background-color: #4CAF50; /* Green button */
     color: white;
     padding: 10px;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #45a049; /* Darker green on hover */
 }
 
 form {
@@ -84,15 +87,16 @@ form {
 
 .header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
 }
 
 .header-div {
     display: inherit;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
 }
 
 .search-form {
@@ -185,12 +189,15 @@ input[type="text"] {
     background-color: #0056b3;
 }
 
+/* Flash Messages */
 .flash {
     position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #ccc;
-    background-color: #f0f0f0;
+    background-color: #f0f0f0; /* Light gray background for flash messages */
     transition: opacity 1s ease-in-out;
 }
-
