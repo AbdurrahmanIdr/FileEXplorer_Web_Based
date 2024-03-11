@@ -175,27 +175,6 @@ def get_unix_path(path_dir):
     return path_dir
 
 
-@app.route('/index/<path:rel_directory>/')
-# @login_required
-def index(rel_directory):
-    """
-       Render the home page or directory listing page.
-
-       Args:
-           rel_directory (str): Relative path of the directory.
-
-       Returns:
-           render_template: Rendered HTML template.
-       """
-
-    rel_directory = get_unix_path(rel_directory)
-
-    if os.path.isdir(rel_directory):
-        files, current_directory = get_sorted_files(rel_directory)
-
-    return render_template('index.html', files=files, current_directory=current_directory.resolve())
-
-
 # Login route
 @app.route('/')
 @app.route('/login/', methods=['GET', 'POST'])
@@ -223,6 +202,29 @@ def login():
     return render_template('login.html')
 
 
+@app.route('/index/<path:rel_directory>/')
+@login_required
+def index(rel_directory):
+    """
+       Render the home page or directory listing page.
+
+       Args:
+           rel_directory (str): Relative path of the directory.
+
+       Returns:
+           render_template: Rendered HTML template.
+       """
+
+    rel_directory = get_unix_path(rel_directory)
+
+    if os.path.isdir(rel_directory):
+        files, current_directory = get_sorted_files(rel_directory)
+    print(session['username'])
+    print(app.secret_key)
+
+    return render_template('index.html', files=files, current_directory=current_directory.resolve())
+
+
 # Logout route
 @app.route('/logout/')
 def logout():
@@ -232,7 +234,7 @@ def logout():
 
 
 @app.route('/view_file/<path:filepath>/', methods=['GET', 'POST'])
-# @login_required
+@login_required
 def view_file(filepath):
     """
         Render the page for viewing file metadata.
@@ -306,7 +308,7 @@ def search_files(directory, query, depth=3):
 
 
 @app.route('/search/')
-# @login_required
+@login_required
 def search():
     """
        Render the page with search results.
@@ -323,7 +325,7 @@ def search():
 
 
 @app.route('/retrieve_selected_file_path/', methods=['POST'])
-# @login_required
+@login_required
 def retrieve_selected_file_path():
     """
         Render the page with retrieved selected file paths.
@@ -337,7 +339,7 @@ def retrieve_selected_file_path():
 
 # Upload route
 @app.route('/upload/<path:current_directory>/', methods=['POST'])
-# @login_required
+@login_required
 def upload(current_directory):
     if 'file' not in request.files:
         flash('No file part', 'error')
@@ -361,7 +363,7 @@ def upload(current_directory):
 
 
 @app.route('/delete_file_or_directory/', methods=['POST'])
-# @login_required
+@login_required
 def delete_file_or_directory():
     if request.method == 'POST':
         path = request.form.get('path')
