@@ -219,14 +219,12 @@ def index(rel_directory):
 
     if os.path.isdir(rel_directory):
         files, current_directory = get_sorted_files(rel_directory)
-    print(session['username'])
-    print(app.secret_key)
 
     return render_template('index.html', files=files, current_directory=current_directory.resolve())
 
 
 # Logout route
-@app.route('/logout/')
+@app.route('/logout/', methods=['POST'])
 def logout():
     session.pop('username', None)  # Remove username from session
     flash('Logged out successfully!', 'success')
