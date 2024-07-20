@@ -378,7 +378,7 @@ def create_app():
                     flash('File or directory does not exist.', 'error')
             except Exception as e:
                 app.logger.error(f"Error deleting file/directory: {e}")
-                flash('An error occurred while deleting the file/directory.', 'error')
+                flash('An error occurred while deleting the file/directory.', e)
 
         return redirect(url_for('index', rel_directory=current_directory))
 
